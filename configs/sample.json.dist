@@ -1,0 +1,5 @@
+{
+  "token": "PASTE_YOUR_DROPBOX_APP_TOKEN_HERE",
+  "srcDirectory": "/path/to/directory/you/want/backup",
+  "destinationPath": "path/in/app/folder/-/or/-/empty/string"
+}
