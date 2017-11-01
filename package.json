@@ -1,0 +1,14 @@
+{
+  "name": "dropbox-backup",
+  "version": "0.0.1",
+  "description": "Simple backup utility that uses Dropbox API as storage.",
+  "main": "main.js",
+  "author": "JacekK",
+  "license": "MIT",
+  "dependencies": {
+    "caporal": "^0.8.0",
+    "dropbox": "^2.5.12",
+    "lodash": "^4.17.4",
+    "moment": "^2.19.1"
+  }
+}
