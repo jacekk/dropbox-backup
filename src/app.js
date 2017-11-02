@@ -1,10 +1,9 @@
-#!/usr/bin/env node
-
 const prog = require('caporal');
 
-const package = require('./package.json');
-const configs = require('./src/configs');
-const backup = require('./src/backup');
+const package = require('../package.json');
+
+const configs = require('./configs');
+const backup = require('./backup');
 
 prog
     .version(package.version)
