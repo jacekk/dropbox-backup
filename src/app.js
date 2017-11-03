@@ -14,8 +14,14 @@ prog
     })
     .command('backup', 'Uploads files into directory named after current date and time.')
     .argument('<config>', 'Name of a json file inside "configs" directory.')
+    .option(
+        '-s, --strategy <strategy>',
+        'Defines the way backup is performed. One of: incremental, sync. More details in README.',
+        ['incremental', 'sync'],
+        'incremental'
+    )
     .action((args, options, logger) => {
-        backup(args.config, logger);
+        backup(args.config, logger, options);
     });
 
 prog.parse(process.argv);

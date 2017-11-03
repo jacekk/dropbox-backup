@@ -45,7 +45,7 @@ const createRemoteDir = async (logger, dbx, path) => {
 
 const listFilesToUpload = (logger, srcDirectory) => {
     try {
-        const files = fs.readdirSync(srcDirectory)
+        const files = fs.readdirSync(srcDirectory) // check nested directories
         logger.debug(files)
 
         return files
@@ -79,29 +79,39 @@ const enqueueFiles = (logger, filesPaths, srcDirectory, remoteDir, dbx) => {
     return q
 }
 
-const backup = async (configName, logger) => {
+const backup = async (configName, logger, options) => {
     const config = readConfig(configName, logger)
     const { srcDirectory, destinationPath, token } = config
     const dbx = new Dropbox({ accessToken: token })
     const remoteDir = path.join(destinationPath, moment().format(UNIQUE_DIRECTORY_FORMAT))
-    const newDir = await createRemoteDir(logger, dbx, remoteDir)
     const filesPaths = listFilesToUpload(logger, srcDirectory)
     const numOfFiles = filesPaths.length
 
-    if (!newDir || !numOfFiles) {
-        return
+    if (!numOfFiles) {
+        return logger.debug('No files to backup.')
     }
 
-    const q = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
-
-    logger.debug(`Uploading ${numOfFiles} files...`)
-
-    q.start((err) => {
-        if (err) { // does NOT work as expected :/
-            return logger.error(String(err))
+    switch (options.strategy) {
+    case 'incremental':
+        const newDir = await createRemoteDir(logger, dbx, remoteDir)
+        if (!newDir) {
+            return
         }
-        logger.info(`Finished uploading ${numOfFiles} files.`)
-    })
+
+        const q = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
+
+        logger.debug(`Uploading ${numOfFiles} files...`)
+        q.start((err) => {
+            if (err) { // does NOT work as expected :/
+                return logger.error(String(err))
+            }
+            logger.info(`Finished uploading ${numOfFiles} files.`)
+        })
+        break;
+    case 'sync':
+        logger.info('@todo sync strategy')
+        break;
+    }
 }
 
 module.exports = backup
