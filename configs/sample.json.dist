@@ -1,5 +1,6 @@
 {
   "token": "PASTE_YOUR_DROPBOX_APP_TOKEN_HERE",
-  "srcDirectory": "/path/to/directory/you/want/backup",
+  "strategy": "incremental OR sync",
+  "srcDirectory": "/path/to/directory/you/want/to/backup",
   "destinationPath": "/path/in/app/folder/-/or/-/just/slash"
 }

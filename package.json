@@ -6,7 +6,7 @@
   "author": "JacekK",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint ./src/"
+    "lint": "eslint ./run* ./src/"
   },
   "dependencies": {
     "babel-eslint": "^8.0.1",

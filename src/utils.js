@@ -2,12 +2,17 @@ const path = require('path')
 const fs = require('fs')
 const { isEqual } = require('lodash')
 
-const CONFIG_KEYS = ['token', 'srcDirectory', 'destinationPath']
+const CONFIG_KEYS = [
+    'destinationPath',
+    'srcDirectory',
+    'strategy',
+    'token',
+]
 
 const getConfigsDir = () => path.resolve(__dirname, '..', 'configs')
 
 const isConfigValid = config =>
-    isEqual(Object.keys(config), CONFIG_KEYS)
+    isEqual(Object.keys(config).sort(), CONFIG_KEYS.sort())
 
 const isJsonFileValid = (filePath, logger) => {
     const fullPath = path.resolve(getConfigsDir(), filePath)

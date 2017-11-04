@@ -109,7 +109,7 @@ const runIncrementalBackup = async (logger, config, filesPaths) => {
     })
 }
 
-const backup = async (configName, logger, options) => {
+const backup = async (configName, logger) => {
     const config = readConfig(configName, logger)
 
     if (!config) {
@@ -124,13 +124,12 @@ const backup = async (configName, logger, options) => {
         return logger.debug('No files to backup.')
     }
 
-    switch (options.strategy) {
-    case 'incremental':
-        runIncrementalBackup(logger, config, filesPaths)
-        break
-    case 'sync':
-        logger.info('@todo sync strategy')
-        break
+    switch (config.strategy) {
+        case 'sync':
+            logger.info('@todo sync strategy')
+            break
+        default:
+            runIncrementalBackup(logger, config, filesPaths)
     }
 }
 

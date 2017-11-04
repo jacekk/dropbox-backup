@@ -6,6 +6,7 @@ const  { isJsonFileValid, getConfigsDir } = require('./utils')
 
 const configs = (logger) => {
     let files
+
     try {
         files = fs.readdirSync(getConfigsDir())
     } catch (ex) {
