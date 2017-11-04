@@ -1,6 +1,8 @@
 const path = require('path')
 const queue = require('queue')
 const fs = require('fs')
+const ls = require('list-directory-contents')
+const { endsWith } = require('lodash')
 const Dropbox = require('dropbox')
 const moment = require('moment')
 
@@ -43,16 +45,22 @@ const createRemoteDir = async (logger, dbx, path) => {
     }
 }
 
-const listFilesToUpload = (logger, srcDirectory) => {
-    try {
-        const files = fs.readdirSync(srcDirectory) // check nested directories
-        logger.debug(files)
+const listFilesToUpload = (logger, srcDirectory) =>
+    new Promise((resolve, reject) => {
+        ls(srcDirectory, (err, tree) => {
+            if (err) {
+                logger.error(String(err))
+                reject(err)
+                return
+            }
 
-        return files
-    } catch (ex) {
-        logger.error(ex.message)
-    }
-}
+            const relativePaths = tree.map(item => item.replace(srcDirectory, ''))
+            const filesOnly = relativePaths.filter(item => !endsWith(item, '/'))
+
+            logger.debug(relativePaths)
+            resolve(filesOnly)
+        })
+    })
 
 const enqueueFiles = (logger, filesPaths, srcDirectory, remoteDir, dbx) => {
     const q = queue(QUEUE_OPTS)
@@ -79,12 +87,37 @@ const enqueueFiles = (logger, filesPaths, srcDirectory, remoteDir, dbx) => {
     return q
 }
 
-const backup = async (configName, logger, options) => {
-    const config = readConfig(configName, logger)
-    const { srcDirectory, destinationPath, token } = config
+const runIncrementalBackup = async (logger, config, filesPaths) => {
+    const { destinationPath, srcDirectory, token } = config
     const dbx = new Dropbox({ accessToken: token })
     const remoteDir = path.join(destinationPath, moment().format(UNIQUE_DIRECTORY_FORMAT))
-    const filesPaths = listFilesToUpload(logger, srcDirectory)
+    const newDir = await createRemoteDir(logger, dbx, remoteDir)
+    const numOfFiles = filesPaths.length
+
+    if (!newDir) {
+        return
+    }
+
+    const q = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
+
+    logger.debug(`Uploading ${numOfFiles} files...`)
+    q.start((err) => {
+        if (err) { // does NOT work as expected :/
+            return logger.error(String(err))
+        }
+        logger.info(`Finished uploading ${numOfFiles} files.`)
+    })
+}
+
+const backup = async (configName, logger, options) => {
+    const config = readConfig(configName, logger)
+
+    if (!config) {
+        return
+    }
+
+    const { srcDirectory } = config
+    const filesPaths = await listFilesToUpload(logger, srcDirectory)
     const numOfFiles = filesPaths.length
 
     if (!numOfFiles) {
@@ -93,24 +126,11 @@ const backup = async (configName, logger, options) => {
 
     switch (options.strategy) {
     case 'incremental':
-        const newDir = await createRemoteDir(logger, dbx, remoteDir)
-        if (!newDir) {
-            return
-        }
-
-        const q = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
-
-        logger.debug(`Uploading ${numOfFiles} files...`)
-        q.start((err) => {
-            if (err) { // does NOT work as expected :/
-                return logger.error(String(err))
-            }
-            logger.info(`Finished uploading ${numOfFiles} files.`)
-        })
-        break;
+        runIncrementalBackup(logger, config, filesPaths)
+        break
     case 'sync':
         logger.info('@todo sync strategy')
-        break;
+        break
     }
 }
 

@@ -1,16 +1,16 @@
-const prog = require('caporal');
+const prog = require('caporal')
 
-const package = require('../package.json');
+const pkg = require('../package.json')
 
-const configs = require('./configs');
-const backup = require('./backup');
+const configs = require('./configs')
+const backup = require('./backup')
 
 prog
-    .version(package.version)
-    .description(package.description)
+    .version(pkg.version)
+    .description(pkg.description)
     .command('configs', 'Lists available configs.')
     .action((args, options, logger) => {
-        configs(logger);
+        configs(logger)
     })
     .command('backup', 'Uploads files into directory named after current date and time.')
     .argument('<config>', 'Name of a json file inside "configs" directory.')
@@ -21,7 +21,7 @@ prog
         'incremental'
     )
     .action((args, options, logger) => {
-        backup(args.config, logger, options);
-    });
+        backup(args.config, logger, options)
+    })
 
-prog.parse(process.argv);
+prog.parse(process.argv)
