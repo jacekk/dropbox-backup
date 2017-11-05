@@ -1,22 +1,16 @@
 const path = require('path')
-const queue = require('queue')
 const fs = require('fs')
 const ls = require('list-directory-contents')
 const { endsWith } = require('lodash')
-const Dropbox = require('dropbox')
-const moment = require('moment')
 
+const incrementalBackup = require('./incrementalBackup')
+const syncBackup = require('./syncBackup')
 const  { isConfigValid, getConfigsDir } = require('./utils')
-
-const UNIQUE_DIRECTORY_FORMAT = 'YYYYMMDD-HHmmss'
-const QUEUE_OPTS = {
-    concurrency: 2,
-    timeout: 5 * 60e3, // 5 minutes
-}
 
 const readConfig = (configName, logger) => {
     const fullPath = path.resolve(getConfigsDir(), configName)
     const config = require(fullPath)
+
     logger.debug(`Loaded: ${fullPath}`)
 
     if (!isConfigValid(config)) {
@@ -30,19 +24,6 @@ const readConfig = (configName, logger) => {
     }
 
     return config
-}
-
-const createRemoteDir = async (logger, dbx, path) => {
-    try {
-        const newDir = await dbx.filesCreateFolder({ path })
-
-        logger.info(`Directory created succesfully: ${path}`)
-        logger.debug(newDir)
-
-        return newDir
-    } catch (ex) {
-        logger.error(String(ex))
-    }
 }
 
 const listFilesToUpload = (logger, srcDirectory) =>
@@ -62,53 +43,6 @@ const listFilesToUpload = (logger, srcDirectory) =>
         })
     })
 
-const enqueueFiles = (logger, filesPaths, srcDirectory, remoteDir, dbx) => {
-    const q = queue(QUEUE_OPTS)
-
-    filesPaths.forEach((filePath) => {
-        q.push(async () => {
-            const srcPath = path.join(srcDirectory, filePath)
-            const destPath = path.join(remoteDir, filePath)
-            try {
-                const uploadConfig = {
-                    contents: fs.readFileSync(srcPath),
-                    path: destPath,
-                }
-                const result = await dbx.filesUpload(uploadConfig)
-                logger.debug(result)
-                return result
-            } catch (ex) {
-                logger.error(String(ex))
-                return ex // ReferenceError (or sth similar) blocks the queue; improve
-            }
-        })
-    })
-
-    return q
-}
-
-const runIncrementalBackup = async (logger, config, filesPaths) => {
-    const { destinationPath, srcDirectory, token } = config
-    const dbx = new Dropbox({ accessToken: token })
-    const remoteDir = path.join(destinationPath, moment().format(UNIQUE_DIRECTORY_FORMAT))
-    const newDir = await createRemoteDir(logger, dbx, remoteDir)
-    const numOfFiles = filesPaths.length
-
-    if (!newDir) {
-        return
-    }
-
-    const q = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
-
-    logger.debug(`Uploading ${numOfFiles} files...`)
-    q.start((err) => {
-        if (err) { // does NOT work as expected :/
-            return logger.error(String(err))
-        }
-        logger.info(`Finished uploading ${numOfFiles} files.`)
-    })
-}
-
 const backup = async (configName, logger) => {
     const config = readConfig(configName, logger)
 
@@ -125,11 +59,11 @@ const backup = async (configName, logger) => {
     }
 
     switch (config.strategy) {
-        case 'sync':
-            logger.info('@todo sync strategy')
-            break
-        default:
-            runIncrementalBackup(logger, config, filesPaths)
+    case 'sync':
+        syncBackup(logger, config, filesPaths)
+        break
+    default:
+        incrementalBackup(logger, config, filesPaths)
     }
 }
 
