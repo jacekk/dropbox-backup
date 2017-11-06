@@ -17,7 +17,7 @@ Read [this](https://blogs.dropbox.com/developers/2014/05/generate-an-access-toke
 
 ### Commands
 
-* `./run configs` - lists available configs.
+* `./run list` - lists available configs.
 * `./run backup <config>` - performes backup process based on given file name inside `configs` directory.
 
 ### Roadmap/Ideas

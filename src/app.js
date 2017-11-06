@@ -8,7 +8,7 @@ const backup = require('./backup')
 prog
     .version(pkg.version)
     .description(pkg.description)
-    .command('configs', 'Lists available configs.')
+    .command('list', 'Lists available configs.')
     .action((args, options, logger) => {
         configs(logger)
     })
