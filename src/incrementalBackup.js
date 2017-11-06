@@ -10,9 +10,10 @@ const incrementalBackup = async (logger, config, filesPaths) => {
     const { destinationPath, srcDirectory, token } = config
     const dbx = new Dropbox({ accessToken: token })
     const remoteDir = path.join(destinationPath, moment().format(UNIQUE_DIRECTORY_FORMAT))
-    const newDir = await createRemoteDir(logger, dbx, remoteDir)
+    const createdDir = await createRemoteDir(logger, dbx, remoteDir)
 
-    if (!newDir) {
+    if (!createdDir) {
+        logger.error(`Created dir does not exist: ${remoteDir}`)
         return
     }
 

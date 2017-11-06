@@ -83,7 +83,7 @@ const checkIfPathExists = async (logger, dbx, remotePath) => {
         return true
     }
     try {
-        const meta = dbx.filesGetMetadata({ path: remotePath })
+        const meta = await dbx.filesGetMetadata({ path: remotePath })
         logger.debug(meta)
         return true
     } catch (ex) {
@@ -93,10 +93,11 @@ const checkIfPathExists = async (logger, dbx, remotePath) => {
 }
 
 const createRemoteDir = async (logger, dbx, remotePath) => {
-    const pathMeta = checkIfPathExists(logger, dbx, remotePath)
+    const pathMeta = await checkIfPathExists(logger, dbx, remotePath)
+
     if (pathMeta) {
         logger.info(`Directory exists: ${remotePath}`)
-        return
+        return pathMeta
     }
 
     try {
