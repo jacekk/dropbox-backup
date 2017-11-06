@@ -4,25 +4,13 @@ const createQueue = require('queue')
 const Dropbox = require('dropbox')
 const moment = require('moment')
 
+const { createRemoteDir } = require('./dropboxHelpers')
+
 const UNIQUE_DIRECTORY_FORMAT = 'YYYYMMDD-HHmmss'
 const QUEUE_OPTS = {
     concurrency: 2,
     timeout: 5 * 60e3, // 5 minutes
 }
-
-const createRemoteDir = async (logger, dbx, path) => {
-    try {
-        const newDir = await dbx.filesCreateFolder({ path })
-
-        logger.info(`Directory created succesfully: ${path}`)
-        logger.debug(newDir)
-
-        return newDir
-    } catch (ex) {
-        logger.error(String(ex))
-    }
-}
-
 
 const enqueueFiles = (logger, filesPaths, srcDirectory, remoteDir, dbx) => {
     const queue = createQueue(QUEUE_OPTS)
@@ -54,13 +42,13 @@ const incrementalBackup = async (logger, config, filesPaths) => {
     const dbx = new Dropbox({ accessToken: token })
     const remoteDir = path.join(destinationPath, moment().format(UNIQUE_DIRECTORY_FORMAT))
     const newDir = await createRemoteDir(logger, dbx, remoteDir)
-    const numOfFiles = filesPaths.length
 
     if (!newDir) {
         return
     }
 
     const queue = enqueueFiles(logger, filesPaths, srcDirectory, remoteDir, dbx)
+    const numOfFiles = filesPaths.length
 
     logger.debug(`Uploading ${numOfFiles} files...`)
     queue.start((err) => {
