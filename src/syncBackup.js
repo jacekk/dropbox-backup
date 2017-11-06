@@ -1,7 +1,12 @@
 const Dropbox = require('dropbox')
 const { trimEnd } = require('lodash')
 
-const { listFilesInRemoteDir } = require('./dropboxHelpers')
+const {
+    createRemoteDir,
+    enqueueFilesRemoval,
+    enqueueFilesUpload,
+    listFilesInRemoteDir,
+} = require('./dropboxHelpers')
 
 const slashEnd = str => trimEnd(str, '/') + '/'
 
@@ -23,30 +28,45 @@ const filterFilesToRemove = (local, remote, remoteDir) => {
     )
 }
 
-const uploadNewFiles = (toUpload, logger) => {
-    logger.info(toUpload)
-    logger.info('@todo upload above files')
+const uploadNewFiles = (logger, filesPaths, dbx, config) => {
+    const { srcDirectory, destinationPath } = config
+    const numOfFiles = filesPaths.length
+    const queue = enqueueFilesUpload(logger, filesPaths, srcDirectory, destinationPath, dbx)
+
+    logger.debug(`Uploading ${numOfFiles} files...`)
+    queue.start((err) => {
+        if (err) { // @todo does NOT work as expected :/
+            return logger.error(String(err))
+        }
+        logger.info(`Finished uploading ${numOfFiles} new file(s).`)
+    })
 }
 
-const removeRemoteFiles = (toRemove, logger, remoteDir) => {
-    logger.info(toRemove.map(
-        item => item.path_lower.replace(
-            slashEnd(remoteDir), ''
-        )
-    ))
-    logger.info('@todo remove above files from remote')
+const removeRemoteFiles = (logger, filesMeta, dbx) => {
+    const numOfFiles = filesMeta.length
+    const queue = enqueueFilesRemoval(logger, filesMeta, dbx)
+
+    logger.debug(`Removing ${numOfFiles} files...`)
+    queue.start((err) => {
+        if (err) { // @todo does NOT work as expected :/
+            return logger.error(String(err))
+        }
+        logger.info(`Finished removing ${numOfFiles} obsolete file(s).`)
+    })
 }
 
 const syncBackup = async (logger, config, localPaths) => {
-    const { destinationPath, /*srcDirectory,*/ token } = config
+    const { destinationPath, token } = config
     const dbx = new Dropbox({ accessToken: token })
-    // @todo make sure remote dir exists
+
+    await createRemoteDir(logger, dbx, destinationPath)
+
     const remoteFiles = await listFilesInRemoteDir(logger, dbx, destinationPath)
     const toUpload = filterFilesToUpload(localPaths, remoteFiles, destinationPath)
     const toRemove = filterFilesToRemove(localPaths, remoteFiles, destinationPath)
 
-    uploadNewFiles(toUpload, logger)
-    removeRemoteFiles(toRemove, logger, destinationPath)
+    uploadNewFiles(logger, toUpload, dbx, config)
+    removeRemoteFiles(logger, toRemove, dbx)
 }
 
 module.exports = syncBackup

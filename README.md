@@ -22,8 +22,8 @@ Read [this](https://blogs.dropbox.com/developers/2014/05/generate-an-access-toke
 
 ### Roadmap/Ideas
 
-* [x] incremental stratedy
-* [ ] sync stratedy
+* [x] incremental strategy
+* [x] sync strategy
 * [ ] incremental limit (to remove oldest)
 * [ ] hash compare for sync
 * [ ] archive option
