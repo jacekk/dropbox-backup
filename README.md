@@ -25,7 +25,7 @@ Read [this](https://blogs.dropbox.com/developers/2014/05/generate-an-access-toke
 * [x] incremental strategy
 * [x] sync strategy
 * [ ] incremental limit (to remove oldest)
-* [ ] hash compare for sync
+* [x] hash compare for sync
 * [ ] archive option
 * [ ] password option for archives
 

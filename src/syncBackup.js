@@ -1,5 +1,5 @@
 const Dropbox = require('dropbox')
-const { trimEnd } = require('lodash')
+const { trimStart, trimEnd } = require('lodash')
 
 const {
     createRemoteDir,
@@ -7,31 +7,48 @@ const {
     enqueueFilesUpload,
     listFilesInRemoteDir,
 } = require('./dropboxHelpers')
+const {
+    extendLocalPathsWithHashes,
+} = require('./contentHashing')
 
 const slashEnd = str => trimEnd(str, '/') + '/'
+const slashStart = str => '/' + trimStart(str, '/')
 
-const filterFilesToUpload = (local, remote, remoteDir) => {
+const filterFilesToUpload = (hashedLocals, remotesMeta, remoteDir) => {
     const remoteDirWithSlash = slashEnd(remoteDir)
-    const remoteOnlyNames = remote.map(item => item.path_lower.replace(remoteDirWithSlash, ''))
-    return local.filter(
-        item => !remoteOnlyNames.includes(item)
-    )
-}
+    const hashedRemotes = remotesMeta.map(item => ({
+        path: slashStart(item.path_lower.replace(remoteDirWithSlash, '')),
+        hash: item.content_hash,
+    }))
 
-const filterFilesToRemove = (local, remote, remoteDir) => {
-    const remoteDirWithSlash = slashEnd(remoteDir)
-    return remote.filter(
+    return hashedLocals.filter(
         item => {
-            const nameWithoutDir = item.path_lower.replace(remoteDirWithSlash, '')
-            return !local.includes(nameWithoutDir)
+            const remoteItemFound = hashedRemotes.find(
+                remoteItem => remoteItem.path === item.path
+            )
+            if (!remoteItemFound) {
+                return true
+            }
+            return remoteItemFound.hash !== item.hash
         }
     )
 }
 
-const uploadNewFiles = (logger, filesPaths, dbx, config) => {
+const filterFilesToRemove = (locals, remotesMeta, remoteDir) => {
+    const remoteDirWithSlash = slashEnd(remoteDir)
+    return remotesMeta.filter(
+        item => {
+            const nameWithoutDir = slashStart(item.path_lower.replace(remoteDirWithSlash, ''))
+            return !locals.includes(nameWithoutDir)
+        }
+    )
+}
+
+const uploadNewFiles = (logger, locals, dbx, config) => {
     const { srcDirectory, destinationPath } = config
-    const numOfFiles = filesPaths.length
-    const queue = enqueueFilesUpload(logger, filesPaths, srcDirectory, destinationPath, dbx)
+    const numOfFiles = locals.length
+    const localsPathsOnly = locals.map(item => item.path)
+    const queue = enqueueFilesUpload(logger, localsPathsOnly, srcDirectory, destinationPath, dbx)
 
     logger.debug(`Uploading ${numOfFiles} files...`)
     queue.start((err) => {
@@ -56,13 +73,15 @@ const removeRemoteFiles = (logger, filesMeta, dbx) => {
 }
 
 const syncBackup = async (logger, config, localPaths) => {
-    const { destinationPath, token } = config
+    const { destinationPath, srcDirectory, token } = config
     const dbx = new Dropbox({ accessToken: token })
 
     await createRemoteDir(logger, dbx, destinationPath)
 
+    const hashedLocals = extendLocalPathsWithHashes(localPaths, srcDirectory)
     const remoteFiles = await listFilesInRemoteDir(logger, dbx, destinationPath)
-    const toUpload = filterFilesToUpload(localPaths, remoteFiles, destinationPath)
+
+    const toUpload = filterFilesToUpload(hashedLocals, remoteFiles, destinationPath)
     const toRemove = filterFilesToRemove(localPaths, remoteFiles, destinationPath)
 
     uploadNewFiles(logger, toUpload, dbx, config)

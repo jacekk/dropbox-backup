@@ -52,11 +52,6 @@ const backup = async (configName, logger) => {
 
     const { srcDirectory } = config
     const filesPaths = await listFilesToUpload(logger, srcDirectory)
-    const numOfFiles = filesPaths.length
-
-    if (!numOfFiles) {
-        return logger.debug('No files to backup.')
-    }
 
     switch (config.strategy) {
     case 'sync':

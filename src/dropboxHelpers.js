@@ -46,6 +46,7 @@ const enqueueFilesUpload = (logger, filesPaths, srcDirectory, remoteDir, dbx) =>
             try {
                 const uploadConfig = {
                     contents: fs.readFileSync(srcPath),
+                    mode: 'overwrite',
                     path: destPath,
                 }
                 const result = await dbx.filesUpload(uploadConfig)
