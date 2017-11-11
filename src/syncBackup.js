@@ -24,7 +24,7 @@ const slashStart = str => DIR_SEPARATOR + trimStart(str, DIR_SEPARATOR)
 const filterFilesToUpload = (hashedLocals, remotesMeta, remoteDir) => {
     const remoteDirWithSlash = slashEnd(remoteDir)
     const hashedRemotes = remotesMeta.map(item => ({
-        path: slashStart(item.path_lower.replace(remoteDirWithSlash, '')),
+        path: slashStart(item.path_display.replace(remoteDirWithSlash, '')),
         hash: item.content_hash,
     }))
 
@@ -45,7 +45,7 @@ const filterFilesToRemove = (locals, remotesMeta, remoteDir) => {
     const remoteDirWithSlash = slashEnd(remoteDir)
     return remotesMeta.filter(
         item => {
-            const nameWithoutDir = slashStart(item.path_lower.replace(remoteDirWithSlash, ''))
+            const nameWithoutDir = slashStart(item.path_display.replace(remoteDirWithSlash, ''))
             return !locals.includes(nameWithoutDir)
         }
     )
