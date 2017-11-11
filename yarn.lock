@@ -1305,6 +1305,12 @@ socks@^1.1.10, socks@~1.1.5:
     ip "^1.1.4"
     smart-buffer "^1.0.13"
 
+sort-paths@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/sort-paths/-/sort-paths-1.1.0.tgz#30ce95e806e10d8a26ed412ebe4f40e69e73a075"
+  dependencies:
+    split-retain "^1.0.1"
+
 source-map@~0.5.6:
   version "0.5.7"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.7.tgz#8a039d2d1021d22d1ea14c80d8ea468ba2ef3fcc"
@@ -1315,6 +1321,10 @@ spawn-sync@^1.0.15:
   dependencies:
     concat-stream "^1.4.7"
     os-shim "^0.1.2"
+
+split-retain@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/split-retain/-/split-retain-1.0.1.tgz#c7028b5bafd54ee53ae2c267e608da8f605eb2a6"
 
 sprintf-js@~1.0.2:
   version "1.0.3"

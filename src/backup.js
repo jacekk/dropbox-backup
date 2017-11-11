@@ -3,9 +3,10 @@ const fs = require('fs')
 const ls = require('list-directory-contents')
 const { endsWith } = require('lodash')
 
+const { DIR_SEPARATOR } = require('./constants')
 const incrementalBackup = require('./incrementalBackup')
 const syncBackup = require('./syncBackup')
-const  { isConfigValid, getConfigsDir } = require('./utils')
+const { isConfigValid, getConfigsDir } = require('./utils')
 
 const readConfig = (configName, logger) => {
     const fullPath = path.resolve(getConfigsDir(), configName)
@@ -36,7 +37,7 @@ const listFilesToUpload = (logger, srcDirectory) =>
             }
 
             const relativePaths = tree.map(item => item.replace(srcDirectory, ''))
-            const filesOnly = relativePaths.filter(item => !endsWith(item, '/'))
+            const filesOnly = relativePaths.filter(item => !endsWith(item, DIR_SEPARATOR))
 
             logger.debug(relativePaths)
             resolve(filesOnly)
