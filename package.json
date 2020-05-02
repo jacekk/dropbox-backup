@@ -5,6 +5,10 @@
   "main": "main.js",
   "author": "JacekK",
   "license": "MIT",
+  "resolutions": {
+    "**/acorn-jsx/acorn": "^5.7.4",
+    "**/espree/acorn": "^5.7.4"
+  },
   "engines": {
     "node": "10.x"
   },
