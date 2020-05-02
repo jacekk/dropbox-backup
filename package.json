@@ -5,6 +5,9 @@
   "main": "main.js",
   "author": "JacekK",
   "license": "MIT",
+  "engines": {
+    "node": "10.x"
+  },
   "scripts": {
     "lint": "eslint ./run* ./src/"
   },
