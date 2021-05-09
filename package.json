@@ -21,7 +21,7 @@
     "dropbox": "^2.5.12",
     "eslint": "^4.10.0",
     "list-directory-contents": "^0.0.3",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "moment": "^2.19.1",
     "queue": "^4.4.2",
     "sort-paths": "^1.1.1"
